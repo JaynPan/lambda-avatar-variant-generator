@@ -70,12 +70,14 @@ exports.handler = async (event) => {
       s3.send(putMediumImageCommand),
     ]);
 
+    console.log("Variant images created and upload to S3 successfully!");
+
     // update meta data
     await axios({
       method: "PATCH",
-      url: process.env.API_URL,
+      url: `${process.env.API_URL}/place-photos/metadata`,
       headers: {
-        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
       },
       data: {
         originalFilename: filename,
@@ -84,7 +86,7 @@ exports.handler = async (event) => {
       },
     });
 
-    console.log("Variant image created and stored successfully!");
+    console.log("update metadata successfully!");
   } catch (err) {
     console.error("Error:", err);
     return {
