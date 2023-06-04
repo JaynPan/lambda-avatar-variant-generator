@@ -1,0 +1,17 @@
+{
+  "name": "lambda-place-photo-variant-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write ./index.js",
+    "zip": "zip -r deploy.zip ./"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.344.0",
+    "sharp": "^0.32.1"
+  }
+}
