@@ -4,6 +4,7 @@ const {
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
 const sharp = require("sharp");
+const axios = require("axios");
 
 const s3 = new S3Client({
   region: "ap-northeast-3",
@@ -46,29 +47,46 @@ exports.handler = async (event) => {
       stream.once("error", reject);
     });
 
-    const smallImage = await sharp(buffer).resize(400).toBuffer();
-    const smallImageKey = `places/small/small-${filename}`;
+    const smallImageBuffer = await sharp(buffer).resize(400).toBuffer();
+    const smallFilename = `small-${filename}`;
+    const smallImageKey = `places/small/${smallFilename}`;
     const putSmallImageCommand = new PutObjectCommand({
       Bucket: bucket,
       Key: smallImageKey,
-      Body: smallImage,
+      Body: smallImageBuffer,
     });
 
-    const mediumImage = await sharp(buffer).resize(700).toBuffer();
-    const mediumImageKey = `places/medium/medium-${filename}`;
+    const mediumImageBuffer = await sharp(buffer).resize(700).toBuffer();
+    const mediumFilename = `medium-${filename}`;
+    const mediumImageKey = `places/medium/${mediumFilename}`;
     const putMediumImageCommand = new PutObjectCommand({
       Bucket: bucket,
       Key: mediumImageKey,
-      Body: mediumImage,
+      Body: mediumImageBuffer,
     });
 
     await Promise.all([
       s3.send(putSmallImageCommand),
       s3.send(putMediumImageCommand),
     ]);
+
+    // update meta data
+    await axios({
+      method: "PATCH",
+      url: process.env.API_URL,
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+      },
+      data: {
+        originalFilename: filename,
+        mediumFilename,
+        smallFilename,
+      },
+    });
+
     console.log("Variant image created and stored successfully!");
   } catch (err) {
-    console.error("Error:", error);
+    console.error("Error:", err);
     return {
       statusCode: 500,
       body: "Error processing the image.",
