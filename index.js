@@ -13,6 +13,33 @@ const s3 = new S3Client({
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
   },
 });
+const BUCKET_PRODUCTION = "jn-foo-production";
+const BUCKET_STAGING = "jn-foo-staging";
+const BUCKET_DEVELOPMENT = "jn-foo-development";
+
+const getServerEnv = (bucket) => {
+  let API_URL = "";
+  let ACCESS_TOKEN = "";
+
+  switch (bucket) {
+    case BUCKET_PRODUCTION:
+      API_URL = process.env.API_URL_PROD;
+      ACCESS_TOKEN = process.env.ACCESS_TOKEN_PROD;
+      break;
+    case BUCKET_STAGING:
+      API_URL = process.env.API_URL_STAGING;
+      ACCESS_TOKEN = process.env.ACCESS_TOKEN_STAGING;
+      break;
+    case BUCKET_DEVELOPMENT:
+      API_URL = process.env.API_URL_DEV;
+      ACCESS_TOKEN = process.env.ACCESS_TOKEN_DEV;
+      break;
+    default:
+      break;
+  }
+
+  return { API_URL, ACCESS_TOKEN };
+};
 
 exports.handler = async (event) => {
   const bucket = event.Records[0].s3.bucket.name;
@@ -72,12 +99,14 @@ exports.handler = async (event) => {
 
     console.log("Variant images created and upload to S3 successfully!");
 
+    const { API_URL, ACCESS_TOKEN } = getServerEnv(bucket);
+
     // update meta data
     await axios({
       method: "PATCH",
-      url: `${process.env.API_URL}/place-photos/metadata`,
+      url: `${API_URL}/place-photos/metadata`,
       headers: {
-        Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
       },
       data: {
         originalFilename: filename,
