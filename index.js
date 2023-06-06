@@ -58,7 +58,7 @@ exports.handler = async (event) => {
     const response = await s3.send(getObjectCommand);
     const stream = response.Body;
     const filename = key.split("/")[2];
-    const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|bmp|svg|heic)$/i;
+    const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|svg)$/i;
     const isImage = imageExtensionsRegex.test(filename);
 
     if (!isImage) {
