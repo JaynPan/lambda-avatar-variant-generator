@@ -57,12 +57,17 @@ exports.handler = async (event) => {
     });
     const response = await s3.send(getObjectCommand);
     const stream = response.Body;
-    const filename = key.split("/")[2];
+    const splitFilepath = key.split("/");
+    const filenameWithExtension = splitFilepath[splitFilepath.length - 1];
+    const filename = filenameWithExtension.split(".")[0];
     const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|svg)$/i;
-    const isImage = imageExtensionsRegex.test(filename);
+    const isImage = imageExtensionsRegex.test(filenameWithExtension);
 
     if (!isImage) {
-      console.log("object is not an image: filename", filename);
+      console.log(
+        "object is not supported to resize: filename",
+        filenameWithExtension
+      );
       return;
     }
 
@@ -74,8 +79,11 @@ exports.handler = async (event) => {
       stream.once("error", reject);
     });
 
-    const smallImageBuffer = await sharp(buffer).resize(400).toBuffer();
-    const smallFilename = `small-${filename}`;
+    const smallImageBuffer = await sharp(buffer)
+      .resize(350)
+      .jpeg({ quality: 25 })
+      .toBuffer();
+    const smallFilename = `small-${filename}.jpeg`;
     const smallImageKey = `places/small/${smallFilename}`;
     const putSmallImageCommand = new PutObjectCommand({
       Bucket: bucket,
@@ -83,8 +91,11 @@ exports.handler = async (event) => {
       Body: smallImageBuffer,
     });
 
-    const mediumImageBuffer = await sharp(buffer).resize(700).toBuffer();
-    const mediumFilename = `medium-${filename}`;
+    const mediumImageBuffer = await sharp(buffer)
+      .resize(650)
+      .jpeg({ quality: 60 })
+      .toBuffer();
+    const mediumFilename = `medium-${filename}.jpeg`;
     const mediumImageKey = `places/medium/${mediumFilename}`;
     const putMediumImageCommand = new PutObjectCommand({
       Bucket: bucket,
@@ -109,7 +120,7 @@ exports.handler = async (event) => {
         Authorization: `Bearer ${ACCESS_TOKEN}`,
       },
       data: {
-        originalFilename: filename,
+        originalFilename: filenameWithExtension,
         mediumFilename,
         smallFilename,
       },
