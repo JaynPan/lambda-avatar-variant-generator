@@ -1,5 +1,5 @@
 {
-  "name": "lambda-place-photo-variant-generator",
+  "name": "lambda-avatar-variant-generator",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

@@ -60,7 +60,7 @@ exports.handler = async (event) => {
     const splitFilepath = key.split("/");
     const filenameWithExtension = splitFilepath[splitFilepath.length - 1];
     const filename = filenameWithExtension.split(".")[0];
-    const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|svg)$/i;
+    const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|svg|heic)$/i;
     const isImage = imageExtensionsRegex.test(filenameWithExtension);
 
     if (!isImage) {
@@ -79,33 +79,33 @@ exports.handler = async (event) => {
       stream.once("error", reject);
     });
 
-    const smallImageBuffer = await sharp(buffer)
-      .resize(350)
-      .jpeg({ quality: 25 })
+    const thumbnailBuffer = await sharp(buffer)
+      .resize(128)
+      .jpeg({ quality: 80 })
       .toBuffer();
-    const smallFilename = `small-${filename}.jpeg`;
-    const smallImageKey = `places/small/${smallFilename}`;
+    const thumbnailFilename = `small-${filename}.jpeg`;
+    const thumbnailImageKey = `avatars/thumbnail/${thumbnailFilename}`;
+    const putThumbnailImageCommand = new PutObjectCommand({
+      Bucket: bucket,
+      Key: thumbnailImageKey,
+      Body: thumbnailBuffer,
+    });
+
+    const smallImageBuffer = await sharp(buffer)
+      .resize(256)
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    const smallFilename = `medium-${filename}.jpeg`;
+    const smallImageKey = `places/medium/${smallFilename}`;
     const putSmallImageCommand = new PutObjectCommand({
       Bucket: bucket,
       Key: smallImageKey,
       Body: smallImageBuffer,
     });
 
-    const mediumImageBuffer = await sharp(buffer)
-      .resize(650)
-      .jpeg({ quality: 60 })
-      .toBuffer();
-    const mediumFilename = `medium-${filename}.jpeg`;
-    const mediumImageKey = `places/medium/${mediumFilename}`;
-    const putMediumImageCommand = new PutObjectCommand({
-      Bucket: bucket,
-      Key: mediumImageKey,
-      Body: mediumImageBuffer,
-    });
-
     await Promise.all([
+      s3.send(putThumbnailImageCommand),
       s3.send(putSmallImageCommand),
-      s3.send(putMediumImageCommand),
     ]);
 
     console.log("Variant images created and upload to S3 successfully!");
@@ -115,14 +115,14 @@ exports.handler = async (event) => {
     // update meta data
     await axios({
       method: "PATCH",
-      url: `${API_URL}/place-photos/metadata`,
+      url: `${API_URL}/avatars/metadata`,
       headers: {
         Authorization: `Bearer ${ACCESS_TOKEN}`,
       },
       data: {
         originalFilename: filenameWithExtension,
-        mediumFilename,
         smallFilename,
+        thumbnailFilename,
       },
     });
 
