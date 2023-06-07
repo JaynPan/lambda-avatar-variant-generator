@@ -60,7 +60,7 @@ exports.handler = async (event) => {
     const splitFilepath = key.split("/");
     const filenameWithExtension = splitFilepath[splitFilepath.length - 1];
     const filename = filenameWithExtension.split(".")[0];
-    const imageExtensionsRegex = /\.(jpg|jpeg|png|gif|svg|heic)$/i;
+    const imageExtensionsRegex = /\.(jpg|jpeg|png)$/i;
     const isImage = imageExtensionsRegex.test(filenameWithExtension);
 
     if (!isImage) {
@@ -83,7 +83,7 @@ exports.handler = async (event) => {
       .resize(128)
       .jpeg({ quality: 80 })
       .toBuffer();
-    const thumbnailFilename = `small-${filename}.jpeg`;
+    const thumbnailFilename = `thumbnail-${filename}.jpeg`;
     const thumbnailImageKey = `avatars/thumbnail/${thumbnailFilename}`;
     const putThumbnailImageCommand = new PutObjectCommand({
       Bucket: bucket,
@@ -95,8 +95,8 @@ exports.handler = async (event) => {
       .resize(256)
       .jpeg({ quality: 80 })
       .toBuffer();
-    const smallFilename = `medium-${filename}.jpeg`;
-    const smallImageKey = `places/medium/${smallFilename}`;
+    const smallFilename = `small-${filename}.jpeg`;
+    const smallImageKey = `avatars/small/${smallFilename}`;
     const putSmallImageCommand = new PutObjectCommand({
       Bucket: bucket,
       Key: smallImageKey,
